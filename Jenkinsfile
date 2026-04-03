@@ -85,19 +85,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Monitoring Stack') {
-            steps {
-                sh '''
-                    aws eks update-kubeconfig --region ap-south-1 --name mycluster
-                    kubectl apply -f prometheus.yml
-                    kubectl apply -f grafana.yml
-                    kubectl apply -f node-exporter.yml
-                    kubectl rollout restart deployment/prometheus
-                '''
-            }
-        }
-
-    }
+       
 
     post {
         always {
