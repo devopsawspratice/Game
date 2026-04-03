@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: puzzle-game
-        image: surya8442/puzzle-game:v1   
+        image: surya8442/sliding-block-puzzle-game:v1   
         ports:
         - containerPort: 8080
         livenessProbe:
