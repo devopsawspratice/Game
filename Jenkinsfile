@@ -30,6 +30,14 @@ pipeline {
                 sh 'npm run build'
             }
         }
+        
+        stage('Upload to Nexus') {
+            steps {
+                dir('backend') {
+                    sh 'mvn deploy -DskipTests'
+                }
+            }
+        }
 
         stage('Sonar') {
             steps {
