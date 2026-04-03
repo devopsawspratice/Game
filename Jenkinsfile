@@ -99,8 +99,8 @@ pipeline {
     steps {
         export KUBECONFIG=/var/lib/jenkins/.kube/config {
             sh '''
-            kubectl apply -f prometheus.yaml
-            kubectl apply -f grafana.yaml
+            kubectl apply -f prometheus.yml
+            kubectl apply -f grafana.yml
             '''
         }
       }
