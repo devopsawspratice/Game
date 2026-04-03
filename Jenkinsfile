@@ -11,6 +11,7 @@ pipeline {
         IMAGE_NAME = "sliding-block-puzzle-game"
         IMAGE_TAG = "v1"
         SONARQUBE_ENV = 'sonar-server'
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'
     }
 
     stages {
@@ -37,10 +38,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh '''
-                        # Install Sonar Scanner if not already installed
                         npm install -g sonar-scanner
-
-                        # Run Sonar Scanner
                         sonar-scanner \
                             -Dsonar.projectKey=puzzlegame \
                             -Dsonar.sources=src \
@@ -79,34 +77,27 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                    export KUBECONFIG=/var/lib/jenkins/.kube/config
-
-                    # Update kubeconfig for EKS cluster
                     aws eks update-kubeconfig --region ap-south-1 --name mycluster
-
-                    # Check nodes
                     kubectl get nodes
-
-                    # Deploy application
                     kubectl apply -f deployment.yml
                     kubectl apply -f service.yml
                 '''
             }
         }
-    }
-    
-    stage('Deploy Monitoring Stack') {
-    steps {
-        export KUBECONFIG=/var/lib/jenkins/.kube/config {
-            sh '''
-            kubectl apply -f prometheus.yml
-            kubectl apply -f grafana.yml
-            kubectl apply -f node-exporter.yml
-            kubectl rollout restart deployment/prometheus
-            '''
+
+        stage('Deploy Monitoring Stack') {
+            steps {
+                sh '''
+                    aws eks update-kubeconfig --region ap-south-1 --name mycluster
+                    kubectl apply -f prometheus.yml
+                    kubectl apply -f grafana.yml
+                    kubectl apply -f node-exporter.yml
+                    kubectl rollout restart deployment/prometheus
+                '''
+            }
         }
-      }
-    }  
+
+    }
 
     post {
         always {
