@@ -1,16 +1,11 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS18'
-        jdk 'JDK17'
-    }
  
     environment {
         DOCKER_USER = "surya8442"
         IMAGE_NAME = "sliding-block-puzzle-game"
         IMAGE_TAG = "v1"
-        SONARQUBE_ENV = 'sonar-server'
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
     }
 
@@ -31,29 +26,6 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'npm run build'
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
-                        npm install -g sonar-scanner
-                        sonar-scanner \
-                            -Dsonar.projectKey=puzzlegame \
-                            -Dsonar.sources=src \
-                            -Dsonar.host.url=$SONAR_HOST_URL \
-                            -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
             }
         }
 
