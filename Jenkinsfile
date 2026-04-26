@@ -8,26 +8,29 @@ pipeline {
     environment {
         DOCKER_USER = "surya8442"
         IMAGE_NAME = "sliding-block-puzzle-game"
-        IMAGE_TAG = "v1"
+        IMAGE_TAG = "${BUILD_NUMBER}"   // dynamic tagging (better than v1)
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
         NEXUS_URL = "http://43.204.30.42:8081/repository/puzzlegame"
-        RECIPIENTS = "suryakandipalli1@gmail.com" 
+        RECIPIENTS = "suryakandipalli1@gmail.com"
     }
 
     stages {
 
+        // -------------------------------
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Surya8442/Game.git'
             }
         }
 
+        // -------------------------------
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
         }
 
+        // -------------------------------
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sq') {
@@ -42,12 +45,23 @@ pipeline {
             }
         }
 
+        // -------------------------------
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        // -------------------------------
         stage('Build') {
             steps {
                 sh 'npm run build'
             }
         }
 
+        // -------------------------------
         stage('Package Artifact') {
             steps {
                 sh '''
@@ -60,6 +74,7 @@ pipeline {
             }
         }
 
+        // -------------------------------
         stage('Upload to Nexus') {
             steps {
                 withCredentials([usernamePassword(
@@ -76,12 +91,17 @@ pipeline {
             }
         }
 
+        // -------------------------------
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_USER/$IMAGE_NAME:$IMAGE_TAG .'
+                sh '''
+                docker build -t $DOCKER_USER/$IMAGE_NAME:$IMAGE_TAG .
+                docker tag $DOCKER_USER/$IMAGE_NAME:$IMAGE_TAG $DOCKER_USER/$IMAGE_NAME:latest
+                '''
             }
         }
 
+        // -------------------------------
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
@@ -92,32 +112,41 @@ pipeline {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
                     docker push $DOCKER_USER/$IMAGE_NAME:$IMAGE_TAG
+                    docker push $DOCKER_USER/$IMAGE_NAME:latest
                     '''
                 }
             }
         }
 
-        stage('Install Helm') {
-            steps {
-                sh '''
-                curl -LO https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
-                tar -zxvf helm-v3.14.0-linux-amd64.tar.gz
-                mv linux-amd64/helm ./helm
-                chmod +x ./helm
-                '''
-            }
-        }
-
+        // -------------------------------
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
                 aws eks update-kubeconfig --region ap-south-1 --name mycluster
+
                 kubectl apply -f deployment.yml
                 kubectl apply -f service.yml
+
+                kubectl rollout status deployment/sliding-block-puzzle
                 '''
             }
         }
 
+        // -------------------------------
+        stage('Install Helm') {
+            steps {
+                sh '''
+                if [ ! -f helm ]; then
+                    curl -LO https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
+                    tar -zxvf helm-v3.14.0-linux-amd64.tar.gz
+                    mv linux-amd64/helm ./helm
+                    chmod +x ./helm
+                fi
+                '''
+            }
+        }
+
+        // -------------------------------
         stage('Deploy Monitoring') {
             steps {
                 sh '''
@@ -130,35 +159,50 @@ pipeline {
             }
         }
 
+        // -------------------------------
         stage('Expose Grafana') {
             steps {
                 sh '''
-                echo "Waiting for Grafana service..."
+                echo "Waiting for Grafana..."
                 sleep 30
-
-                kubectl get svc -n monitoring
 
                 kubectl patch svc monitoring-grafana \
                 -n monitoring \
                 -p '{"spec": {"type": "LoadBalancer"}}'
+
+                kubectl get svc -n monitoring
                 '''
             }
         }
     }
 
+    // ==========================================
     post {
+
         success {
             emailext(
-                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Build SUCCESS 🎉\n\nURL: ${env.BUILD_URL}",
+                subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                Build SUCCESS 🎉
+
+                Job: ${env.JOB_NAME}
+                Build: ${env.BUILD_NUMBER}
+                URL: ${env.BUILD_URL}
+                """,
                 to: "${env.RECIPIENTS}"
             )
         }
 
         failure {
             emailext(
-                subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Build FAILED ❌\n\nURL: ${env.BUILD_URL}",
+                subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                Build FAILED ❌
+
+                Job: ${env.JOB_NAME}
+                Build: ${env.BUILD_NUMBER}
+                URL: ${env.BUILD_URL}
+                """,
                 to: "${env.RECIPIENTS}"
             )
         }
