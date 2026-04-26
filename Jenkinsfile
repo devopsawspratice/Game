@@ -1,7 +1,9 @@
 pipeline {
     agent any
 
-
+    tools {
+        nodejs 'NodeJS18'
+    }
 
     environment {
         DOCKER_USER = "surya8442"
@@ -28,7 +30,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('sq') {
                     sh '''
-                        sonar-scanner \
+                        /opt/sonar-scanner/bin/sonar-scanner \
                         -Dsonar.projectKey=game \
                         -Dsonar.sources=src \
                         -Dsonar.projectName=game-App \
@@ -73,7 +75,6 @@ pipeline {
             steps {
                 sh '''
                     aws eks update-kubeconfig --region ap-south-1 --name mycluster
-                    kubectl get nodes
                     kubectl apply -f deployment.yml
                     kubectl apply -f service.yml
                 '''
@@ -82,47 +83,12 @@ pipeline {
     }
 
     post {
-
         success {
-            mail to: 'suryakandipalli@gmail.com',
-            subject: "SUCCESS: NodeJS Pipeline - ${JOB_NAME}",
-            body: """
-Hi Surya,
-
-Pipeline SUCCESSFUL 🚀
-
-Project: Zomato-App (NodeJS)
-Build Number: ${BUILD_NUMBER}
-Docker Image: ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
-
-All stages completed successfully:
-✔ Git Checkout
-✔ Build
-✔ SonarQube Passed
-✔ Docker Push
-✔ Kubernetes Deploy
-
-Regards,
-Jenkins CI/CD
-"""
+            echo "SUCCESS: Pipeline completed"
         }
 
         failure {
-            mail to: 'suryakandipalli@gmail.com',
-            subject: "FAILED: NodeJS Pipeline - ${JOB_NAME}",
-            body: """
-Hi Surya,
-
-Pipeline FAILED ❌
-
-Project: Zomato-App (NodeJS)
-Build Number: ${BUILD_NUMBER}
-
-Please check Jenkins logs for error details.
-
-Regards,
-Jenkins CI/CD
-"""
+            echo "FAILED: Check Jenkins logs"
         }
 
         always {
