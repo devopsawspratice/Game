@@ -6,12 +6,12 @@ pipeline {
     }
 
     environment {
-        DOCKER_USER = "surya8442"
+        DOCKER_USER = "devopsawspractice"
         IMAGE_NAME = "sliding-block-puzzle-game"
         IMAGE_TAG = "${BUILD_NUMBER}"   // dynamic tagging (better than v1)
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
         NEXUS_URL = "http://13.232.28.159:8081/repository/puzzlegame"
-        RECIPIENTS = "suryakandipalli@gmail.com"
+        RECIPIENTS = "sharan0434@gmail.com"
     }
 
     stages {
