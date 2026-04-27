@@ -10,7 +10,7 @@ pipeline {
         IMAGE_NAME = "sliding-block-puzzle-game"
         IMAGE_TAG = "${BUILD_NUMBER}"   // dynamic tagging (better than v1)
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
-        NEXUS_URL = "http://13.232.28.159:8081/repository/puzzlegame"
+        NEXUS_URL = "http://3.87.101.113:8081/repository/nuget-hosted/"
         RECIPIENTS = "sharan0434@gmail.com"
     }
 
@@ -19,7 +19,7 @@ pipeline {
         // -------------------------------
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Surya8442/Game.git'
+                git branch: 'main', url: 'https://github.com/devopsawspratice/Game.git'
             }
         }
 
