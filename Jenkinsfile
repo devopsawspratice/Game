@@ -70,7 +70,7 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'nexus-credentials',
+                    credentialsId: 'nexus-cred',
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
@@ -97,7 +97,7 @@ pipeline {
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'Docker_cred',
+                    credentialsId: 'docker',
                     usernameVariable: 'USER',
                     passwordVariable: 'PASS'
                 )]) {
@@ -114,7 +114,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                aws eks update-kubeconfig --region ap-south-1 --name mycluster
+                aws eks update-kubeconfig --region us-east-1 --name saran
 
                 kubectl apply -f deployment.yml
                 kubectl apply -f service.yml
