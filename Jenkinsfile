@@ -31,7 +31,14 @@ pipeline {
         }
 
         // -------------------------------
-       
+
+      stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        
  steps {
         script {
             def scannerHome = tool 'sq'
@@ -49,11 +56,7 @@ pipeline {
 }
 
         // -------------------------------
-        stage('Build') {
-            steps {
-                sh 'npm run build'
-            }
-        }
+  
 
         // -------------------------------
         stage('Package Artifact') {
