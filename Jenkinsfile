@@ -32,19 +32,7 @@ pipeline {
 
         // -------------------------------
        
-
-
-        // -------------------------------
-        stage('Build') {
-            steps {
-                sh 'npm run build'
-            }
-        }
-
-        // -------------------------------
-        stage('Package Artifact') {
-            steps {stage('SonarQube Analysis') {
-    steps {
+ steps {
         script {
             def scannerHome = tool 'sq'
             withSonarQubeEnv('sq') {
@@ -59,6 +47,18 @@ pipeline {
         }
     }
 }
+
+        // -------------------------------
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        // -------------------------------
+        stage('Package Artifact') {
+            steps {stage('SonarQube Analysis') {
+   
                 sh '''
                 if [ -d dist ]; then
                     tar -czf app-${BUILD_NUMBER}.tar.gz dist
