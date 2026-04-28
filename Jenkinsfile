@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_USER = "devopsawspractice"
+        DOCKER_USER = "devopsawspratice"
         IMAGE_NAME = "sliding-block-puzzle-game"
         IMAGE_TAG = "${BUILD_NUMBER}"   // dynamic tagging (better than v1)
         KUBECONFIG = '/var/lib/jenkins/.kube/config'
@@ -19,7 +19,7 @@ pipeline {
         // -------------------------------
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/devopsawspratice/Game.git'
+                git branch: 'main', url: 'https://github.com/Mahesh1-code141/Gaming_Project.git'
             }
         }
 
@@ -31,15 +31,8 @@ pipeline {
         }
 
         // -------------------------------
-
-      stage('Build') {
-            steps {
-                sh 'npm run build'
-            }
-        }
-
-        
- steps {
+stage('SonarQube Analysis') {
+    steps {
         script {
             def scannerHome = tool 'sq'
             withSonarQubeEnv('sq') {
@@ -55,13 +48,17 @@ pipeline {
     }
 }
 
+
         // -------------------------------
-  
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
 
         // -------------------------------
         stage('Package Artifact') {
-            steps {stage('SonarQube Analysis') {
-   
+            steps {
                 sh '''
                 if [ -d dist ]; then
                     tar -czf app-${BUILD_NUMBER}.tar.gz dist
@@ -120,7 +117,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                aws eks update-kubeconfig --region us-east-1 --name saran
+                aws eks update-kubeconfig --region ap-south-1 --name mycluster
 
                 kubectl apply -f deployment.yml
                 kubectl apply -f service.yml
