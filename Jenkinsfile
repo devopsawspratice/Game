@@ -31,19 +31,7 @@ pipeline {
         }
 
         // -------------------------------
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sq') {
-                    sh '''
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=game \
-                    -Dsonar.sources=src \
-                    -Dsonar.projectName=game-App \
-                    -Dsonar.projectVersion=${BUILD_NUMBER}
-                    '''
-                }
-            }
-        }
+       
 
 
         // -------------------------------
@@ -55,7 +43,22 @@ pipeline {
 
         // -------------------------------
         stage('Package Artifact') {
-            steps {
+            steps {stage('SonarQube Analysis') {
+    steps {
+        script {
+            def scannerHome = tool 'sq'
+            withSonarQubeEnv('sq') {
+                sh """
+                ${scannerHome}/bin/sonar-scanner \
+                -Dsonar.projectKey=game \
+                -Dsonar.sources=src \
+                -Dsonar.projectName=game-App \
+                -Dsonar.projectVersion=${BUILD_NUMBER}
+                """
+            }
+        }
+    }
+}
                 sh '''
                 if [ -d dist ]; then
                     tar -czf app-${BUILD_NUMBER}.tar.gz dist
